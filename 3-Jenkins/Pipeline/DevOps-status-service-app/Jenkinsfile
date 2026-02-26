@@ -1,11 +1,25 @@
 pipeline {
-  agent any
+  agent {
+    docker {
+      image 'ubuntu:22.04'
+      args '-u root -v /var/run/docker.sock:/var/run/docker.sock'
+    }
+  }
 
   parameters {
     choice(name: 'ENV', choices: ['dev', 'test', 'prod'], description: 'Target environment')
   }
 
   stages {
+    stage('Install Docker CLI') {
+      steps {
+        sh '''
+          apt-get update
+          apt-get install -y docker.io
+        '''
+      }
+    }
+
     stage('Checkout') {
       steps {
         checkout scm
@@ -20,7 +34,7 @@ pipeline {
 
     stage('Test') {
       steps {
-        sh 'docker run --rm status-service:${BUILD_NUMBER} node -e "console.log(\"Tests passed\")"'
+        sh 'docker run --rm status-service:${BUILD_NUMBER} node -e "console.log(\\"Tests passed\\")"'
       }
     }
 
